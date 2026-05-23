@@ -1,0 +1,35 @@
+export declare class UpdateProfileDto {
+    dateOfBirth?: string;
+    gender?: string;
+    fatherName?: string;
+    motherName?: string;
+    guardianPhone?: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    admissionType?: string;
+    category?: string;
+    boardType?: string;
+    preferredBranch?: string;
+    tenthSchool?: string;
+    tenthBoard?: string;
+    tenthYear?: number;
+    tenthPercentage?: number;
+    tenthRegisterNo?: string;
+    twelfthSchool?: string;
+    twelfthBoard?: string;
+    twelfthYear?: number;
+    twelfthPercentage?: number;
+    twelfthRegisterNo?: string;
+    twelfthPhysics?: number;
+    twelfthChemistry?: number;
+    twelfthMaths?: number;
+    twelfthPcmPercentage?: number;
+    cetNumber?: string;
+    cetRank?: number;
+    cetCategoryRank?: number;
+    comedkNumber?: string;
+    comedkRank?: number;
+}

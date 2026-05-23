@@ -1,0 +1,33 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2021",
+    "module": "commonjs",
+    "lib": ["ES2021", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@atria/shared": ["libs/shared/src/index.ts"],
+      "@atria/shared/*": ["libs/shared/src/*"],
+      "@atria/ui": ["libs/ui/src/index.ts"],
+      "@atria/ui/*": ["libs/ui/src/*"],
+      "@atria/forms": ["libs/forms/src/index.ts"],
+      "@atria/forms/*": ["libs/forms/src/*"],
+      "@atria/api-client": ["libs/api-client/src/index.ts"],
+      "@atria/api-client/*": ["libs/api-client/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

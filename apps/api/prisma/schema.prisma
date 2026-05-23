@@ -1,0 +1,295 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS (SQLite doesn't support native enums, use String fields) ─────────
+
+// ─── MODELS ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  passwordHash       String    @map("password_hash")
+  role               String    @default("student")
+  firstName          String    @map("first_name")
+  lastName           String    @map("last_name")
+  phone              String?
+  isActive           Boolean   @default(true) @map("is_active")
+  mustChangePassword Boolean   @default(false) @map("must_change_password")
+  lastLoginAt        DateTime? @map("last_login_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  studentProfile       StudentProfile?
+  application          Application?       @relation("ApplicationStudent")
+  invitesCreated       Invite[]           @relation("InviteCreatedBy")
+  invite               Invite?            @relation("InviteStudent")
+  documents            Document[]         @relation("DocumentStudent")
+  documentsReviewed    Document[]         @relation("DocumentReviewer")
+  correctionsReviewed  CorrectionRequest[] @relation("CorrectionReviewer")
+  applicationsReviewed Application[]      @relation("ApplicationReviewer")
+  correctionRequests   CorrectionRequest[] @relation("CorrectionStudent")
+  notifications        Notification[]
+  refreshTokens        RefreshToken[]
+  auditLogs            AuditLog[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Invite {
+  id         String    @id @default(uuid())
+  email      String
+  firstName  String    @map("first_name")
+  lastName   String    @map("last_name")
+  token      String    @unique
+  status     String    @default("pending")
+  createdBy  String    @map("created_by")
+  studentId  String?   @unique @map("student_id")
+  expiresAt  DateTime  @map("expires_at")
+  acceptedAt DateTime? @map("accepted_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  creator User  @relation("InviteCreatedBy", fields: [createdBy], references: [id])
+  student User? @relation("InviteStudent", fields: [studentId], references: [id])
+
+  @@index([token])
+  @@index([email])
+  @@index([status])
+  @@map("invites")
+}
+
+model StudentProfile {
+  id     String @id @default(uuid())
+  userId String @unique @map("user_id")
+
+  // Personal
+  dateOfBirth   DateTime? @map("date_of_birth")
+  gender        String?
+  fatherName    String?   @map("father_name")
+  motherName    String?   @map("mother_name")
+  guardianPhone String?   @map("guardian_phone")
+
+  // Address
+  addressLine1 String? @map("address_line1")
+  addressLine2 String? @map("address_line2")
+  city         String?
+  state        String?
+  pincode      String?
+
+  // Academic background
+  admissionType   String? @map("admission_type")
+  category        String?
+  boardType       String? @map("board_type")
+  preferredBranch String? @map("preferred_branch")
+
+  // 10th details
+  tenthSchool     String?  @map("tenth_school")
+  tenthBoard      String?  @map("tenth_board")
+  tenthYear       Int?     @map("tenth_year")
+  tenthPercentage Float?   @map("tenth_percentage")
+  tenthRegisterNo String?  @map("tenth_register_no")
+
+  // 12th details
+  twelfthSchool        String? @map("twelfth_school")
+  twelfthBoard         String? @map("twelfth_board")
+  twelfthYear          Int?    @map("twelfth_year")
+  twelfthPercentage    Float?  @map("twelfth_percentage")
+  twelfthRegisterNo    String? @map("twelfth_register_no")
+  twelfthPhysics       Float?  @map("twelfth_physics")
+  twelfthChemistry     Float?  @map("twelfth_chemistry")
+  twelfthMaths         Float?  @map("twelfth_maths")
+  twelfthPcmPercentage Float?  @map("twelfth_pcm_percentage")
+
+  // Entrance exam
+  cetNumber       String? @map("cet_number")
+  cetRank         Int?    @map("cet_rank")
+  cetCategoryRank Int?    @map("cet_category_rank")
+  comedkNumber    String? @map("comedk_number")
+  comedkRank      Int?    @map("comedk_rank")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("student_profiles")
+}
+
+model Application {
+  id            String    @id @default(uuid())
+  studentId     String    @unique @map("student_id")
+  admissionType String    @map("admission_type")
+  category      String
+  status        String    @default("draft")
+  formData      String    @default("{}") @map("form_data")
+  submittedAt   DateTime? @map("submitted_at")
+  reviewedBy    String?   @map("reviewed_by")
+  reviewedAt    DateTime? @map("reviewed_at")
+  adminNotes    String?   @map("admin_notes")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  student              User                @relation("ApplicationStudent", fields: [studentId], references: [id])
+  reviewer             User?               @relation("ApplicationReviewer", fields: [reviewedBy], references: [id])
+  documents            Document[]
+  correctionRequests   CorrectionRequest[]
+  payments             Payment[]
+
+  @@index([studentId])
+  @@index([status])
+  @@index([admissionType])
+  @@map("applications")
+}
+
+model Document {
+  id            String  @id @default(uuid())
+  applicationId String  @map("application_id")
+  studentId     String  @map("student_id")
+  documentType  String  @map("document_type")
+  status        String  @default("pending")
+
+  // Storage
+  fileName String? @map("file_name")
+  filePath String? @map("file_path")
+  fileSize Int?    @map("file_size")
+  mimeType String? @map("mime_type")
+
+  // OCR
+  ocrRaw       String? @map("ocr_raw")
+  ocrExtracted String? @map("ocr_extracted")
+  ocrConfirmed String? @map("ocr_confirmed")
+  ocrStatus    String  @default("pending") @map("ocr_status")
+  ocrError     String? @map("ocr_error")
+
+  // Review
+  reviewedBy      String?   @map("reviewed_by")
+  reviewedAt      DateTime? @map("reviewed_at")
+  rejectionReason String?   @map("rejection_reason")
+
+  uploadedAt DateTime? @map("uploaded_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  student     User        @relation("DocumentStudent", fields: [studentId], references: [id])
+  reviewer    User?       @relation("DocumentReviewer", fields: [reviewedBy], references: [id])
+
+  @@unique([applicationId, documentType])
+  @@index([applicationId])
+  @@index([studentId])
+  @@index([status])
+  @@index([documentType])
+  @@map("documents")
+}
+
+model CorrectionRequest {
+  id             String    @id @default(uuid())
+  applicationId  String    @map("application_id")
+  studentId      String    @map("student_id")
+  fieldPath      String    @map("field_path")
+  fieldLabel     String    @map("field_label")
+  currentValue   String?   @map("current_value")
+  requestedValue String?   @map("requested_value")
+  studentMessage String    @map("student_message")
+  status         String    @default("pending")
+  reviewedBy     String?   @map("reviewed_by")
+  reviewedAt     DateTime? @map("reviewed_at")
+  adminNotes     String?   @map("admin_notes")
+  fieldUnlocked  Boolean   @default(false) @map("field_unlocked")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  application Application @relation(fields: [applicationId], references: [id])
+  student     User        @relation("CorrectionStudent", fields: [studentId], references: [id])
+  reviewer    User?       @relation("CorrectionReviewer", fields: [reviewedBy], references: [id])
+
+  @@index([applicationId])
+  @@index([status])
+  @@map("correction_requests")
+}
+
+model AuditLog {
+  id         String    @id @default(uuid())
+  actorId    String?   @map("actor_id")
+  actorRole  String?   @map("actor_role")
+  action     String
+  entityType String?   @map("entity_type")
+  entityId   String?   @map("entity_id")
+  metadata   String    @default("{}")
+  ipAddress  String?   @map("ip_address")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  body      String
+  isRead    Boolean  @default(false) @map("is_read")
+  metadata  String   @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Payment {
+  id                String    @id @default(uuid())
+  applicationId     String    @map("application_id")
+  amount            Float
+  currency          String    @default("INR")
+  status            String    @default("pending")
+  razorpayOrderId   String?   @unique @map("razorpay_order_id")
+  razorpayPaymentId String?   @unique @map("razorpay_payment_id")
+  razorpaySignature String?   @map("razorpay_signature")
+  errorReason       String?   @map("error_reason")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  application Application @relation(fields: [applicationId], references: [id])
+
+  @@map("payments")
+}
